@@ -2,17 +2,28 @@ Spectr = {}
 @Spectr = Spectr
 Spectr.VERSION = '0.0.1'
 
+Spectr.ajax = (model, type, params) ->
+  options = {}
+  options.url = model.url()
+  options.type = type
+  options.data = if type is 'GET' then {} else model.toJson()
+  $.extend(options, params)
+  $.ajax(options)
+    
+
 class Spectr.Object
   
+  attributes: {}
   events: {}
+  template: {}
   resource: ''
-  
+    
   constructor: (params = document) ->
     if typeof params is 'object'
       if params instanceof jQuery || params is document
         @el = params
       else
-        @el = params.root || document
+        @el = params.el || document
         @attributes = params.attr || {}
     for event, callback of @events
       if event.match(/:/)
@@ -24,6 +35,9 @@ class Spectr.Object
       else
         @subscribe(event, callback)
     @initialize if @initialize?
+    
+  render: =>
+    $(@el).empty().html(@template.render())
     
   escape: (string) =>
     escapes =
@@ -46,24 +60,29 @@ class Spectr.Object
     else
       @attributes[name] = @escape(value)
       
+  toJson: =>
+    data = {}
+    data[@constructor.name.toLowerCase()] = @attributes
+    data
+    
   isNew: =>
     @get('id') is undefined
     
   url: =>
-    if @isNew() then @resource else "#{@resource}/#{@get('id')}"
+    resource = @resource
+    params = @resource.match(/:[a-z_]+/) || []
+    for param in params
+      resource = resource.replace(param, @get(param.replace(/:/, '')))
+    if @isNew() then resource else "#{resource}/#{@get('id')}"
     
   fetch: =>
-    $.ajax
-      url: @url()
-      type: "GET"
+    Spectr.ajax @, "GET",
       success: (json) =>
         @set(json)
       
   save: =>
     type = if @isNew() then "POST" else "PUT"
-    $.ajax
-      url: @url()
-      type: type
+    Spectr.ajax @, type, 
       success: (json) =>
         @set(json)
   
