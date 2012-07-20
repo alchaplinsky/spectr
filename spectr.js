@@ -86,7 +86,7 @@
     }
 
     Object.prototype.render = function() {
-      return $(this.el).empty().html(this.template.render());
+      return $(this.el).empty().html(this.template(this.attributes));
     };
 
     Object.prototype.escape = function(string) {
@@ -110,17 +110,16 @@
     };
 
     Object.prototype.set = function(name, value) {
-      var key, val, _results;
+      var key, val;
       if (typeof name === 'object' || name === null) {
-        _results = [];
         for (key in name) {
           val = name[key];
-          _results.push(this.attributes[key] = this.escape(val));
+          this.attributes[key] = this.escape(val);
         }
-        return _results;
       } else {
-        return this.attributes[name] = this.escape(value);
+        this.attributes[name] = this.escape(value);
       }
+      return this.render();
     };
 
     Object.prototype.toJson = function() {

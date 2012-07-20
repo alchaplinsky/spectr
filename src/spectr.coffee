@@ -37,7 +37,7 @@ class Spectr.Object
     @initialize if @initialize?
     
   render: =>
-    $(@el).empty().html(@template.render())
+    $(@el).empty().html(@template(@attributes))
     
   escape: (string) =>
     escapes =
@@ -59,6 +59,7 @@ class Spectr.Object
         @attributes[key] = @escape(val)
     else
       @attributes[name] = @escape(value)
+    @render()
       
   toJson: =>
     data = {}
