@@ -30,8 +30,7 @@
     Object.prototype.resource = '';
 
     function Object(params) {
-      var bind, callback, event, _ref,
-        _this = this;
+      var callback, event, _ref;
       if (params == null) {
         params = document;
       }
@@ -57,6 +56,8 @@
 
       this.render = __bind(this.render, this);
 
+      this.applyEvent = __bind(this.applyEvent, this);
+
       if (typeof params === 'object') {
         if (params instanceof jQuery || params === document) {
           this.el = params;
@@ -68,22 +69,28 @@
       _ref = this.events;
       for (event in _ref) {
         callback = _ref[event];
-        if (event.match(/:/)) {
-          bind = event.split(':');
-          $(this.el).on(bind[0], bind[1], function(event) {
-            var data;
-            data = $(event.target).data();
-            data.target = event.target;
-            return _this[callback](data);
-          });
-        } else {
-          this.subscribe(event, callback);
-        }
+        this.applyEvent(event, callback);
       }
       if (this.initialize != null) {
         this.initialize;
       }
     }
+
+    Object.prototype.applyEvent = function(event, callback) {
+      var bind,
+        _this = this;
+      if (event.match(/:/)) {
+        bind = event.split(':');
+        return $(this.el).on(bind[0], bind[1], function(event) {
+          var data;
+          data = $(event.target).data();
+          data.target = event.target;
+          return _this[callback](data);
+        });
+      } else {
+        return this.subscribe(event, callback);
+      }
+    };
 
     Object.prototype.render = function() {
       return $(this.el).empty().html(this.template(this.attributes));
@@ -183,6 +190,42 @@
     };
 
     return Object;
+
+  })();
+
+  Spectr.Collection = (function() {
+
+    function Collection() {}
+
+    Collection.prototype.model = '';
+
+    Collection.prototype.collection = [];
+
+    Collection.prototype.fetch = function() {
+      var sample,
+        _this = this;
+      sample = new this.model();
+      return Spectr.ajax(sample, "GET", {
+        success: function(json) {
+          return _this.fill(json);
+        }
+      });
+    };
+
+    Collection.prototype.fill = function(data) {
+      var model, obj, _i, _len, _results;
+      _results = [];
+      for (_i = 0, _len = data.length; _i < _len; _i++) {
+        obj = data[_i];
+        model = new this.model({
+          attr: obj
+        });
+        _results.push(this.collection.push(model));
+      }
+      return _results;
+    };
+
+    return Collection;
 
   })();
 

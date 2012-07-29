@@ -26,16 +26,19 @@ class Spectr.Object
         @el = params.el || document
         @attributes = params.attr || {}
     for event, callback of @events
-      if event.match(/:/)
-        bind = event.split(':')
-        $(@el).on bind[0], bind[1], (event) =>
-          data = $(event.target).data()
-          data.target = event.target
-          @[callback](data)
-      else
-        @subscribe(event, callback)
+      @applyEvent(event, callback)
     @initialize if @initialize?
-    
+  
+  applyEvent: (event, callback)=>
+    if event.match(/:/)
+      bind = event.split(':')
+      $(@el).on bind[0], bind[1], (event) =>
+        data = $(event.target).data()
+        data.target = event.target
+        @[callback](data)
+    else
+      @subscribe(event, callback)
+      
   render: =>
     $(@el).empty().html(@template(@attributes))
     
@@ -93,3 +96,19 @@ class Spectr.Object
 
   publish: (event, data = null) =>
     $(document).trigger(event, data)
+
+class Spectr.Collection
+  
+  model: ''
+  collection: []
+  
+  fetch: ->
+    sample = new @model()
+    Spectr.ajax sample, "GET",
+      success: (json) =>
+        @fill(json)
+    
+  fill: (data) ->
+    for obj in data
+      model = new @model(attr: obj)
+      @collection.push(model)
